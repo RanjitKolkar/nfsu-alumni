@@ -174,7 +174,7 @@ st.markdown("""
 # -----------------------------
 # Register Button
 # -----------------------------
-google_form_link = "YOUR_GOOGLE_FORM_LINK"
+google_form_link = "https://forms.gle/hZJqwiAhc9gFpihg7"
 
 st.markdown(
 f'<a href="{google_form_link}" target="_blank" class="register-btn">Register as Alumni</a>',
