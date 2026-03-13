@@ -172,7 +172,7 @@ st.subheader("📢 Announcements")
 
 st.markdown("""
 <div class="announce">
-• Alumni Meet will be scheduled soon.<br>
+• NFSU Goa, first Alumni Meet will be scheduled in April 2026.<br>
 • Update your alumni details through the registration form.<br>
 • Alumni mentorship program launching soon.
 </div>
