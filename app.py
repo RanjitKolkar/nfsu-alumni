@@ -19,7 +19,7 @@ program_colors = {
 # -----------------------------
 # Load Data
 # -----------------------------
-@st.cache_data
+@st.cache_data(ttl=60)
 def load_data():
     df = pd.read_excel("alumni_data.xlsx")
 
@@ -27,7 +27,6 @@ def load_data():
     df = df.dropna(subset=["PASSING YEAR"])
     df["PASSING YEAR"] = df["PASSING YEAR"].astype(int)
 
-    # Clean text fields
     df["Program"] = df["Program"].str.strip()
     df["Name"] = df["Name"].str.strip()
 
@@ -35,11 +34,15 @@ def load_data():
 
 df = load_data()
 
-# Hide future batches
+# -----------------------------
+# Remove Future Years
+# -----------------------------
 current_year = datetime.datetime.now().year
 df = df[df["PASSING YEAR"] < current_year]
 
-# Last update from file
+# -----------------------------
+# Last Update Date
+# -----------------------------
 file_time = os.path.getmtime("alumni_data.xlsx")
 last_update = datetime.datetime.fromtimestamp(file_time).strftime("%d %B %Y")
 
@@ -53,7 +56,6 @@ st.markdown("""
 background-color:#f2f5f9;
 }
 
-/* Header */
 .portal-title{
 color:#1a237e;
 font-size:36px;
@@ -61,7 +63,6 @@ font-weight:bold;
 margin-top:10px;
 }
 
-/* Cards */
 .card{
 background:white;
 padding:16px;
@@ -92,7 +93,6 @@ font-size:12px;
 color:#777;
 }
 
-/* Year Header */
 .year-header{
 background:#1a237e;
 color:white;
@@ -103,14 +103,12 @@ font-weight:bold;
 margin-top:25px;
 }
 
-/* Divider */
 .program-divider{
 height:4px;
 border-radius:4px;
 margin-bottom:15px;
 }
 
-/* Announcement */
 .announce{
 background:#fff3cd;
 padding:14px;
@@ -135,13 +133,8 @@ transition:0.2s;
 background:white;
 color:#1a237e !important;
 border:2px solid #1a237e;
-text-decoration:none;
 }
-.register-btn:focus{
-outline:none;
-box-shadow:0 0 5px rgba(26,35,126,0.6);
-}
-/* Footer */
+
 .footer{
 text-align:center;
 padding:20px;
@@ -191,32 +184,39 @@ unsafe_allow_html=True
 st.write("")
 
 # -----------------------------
+# Alumni Totals BEFORE search
+# -----------------------------
+total_alumni = len(df)
+
+# -----------------------------
 # Search
 # -----------------------------
 search = st.text_input("🔍 Search Alumni")
 
+display_df = df.copy()
+
 if search:
-    df = df[df["Name"].str.contains(search, case=False)]
+    display_df = display_df[display_df["Name"].str.contains(search, case=False)]
 
 # -----------------------------
 # Alumni Directory
 # -----------------------------
-total_alumni = len(df)
 st.markdown("### 🎓 Alumni Directory")
 
-# -----------------------------
-# Year Summary
-# -----------------------------
+st.markdown(
+f"<span style='font-size:14px;color:gray;'>Last updated: {last_update} | Total Alumni: {total_alumni}</span>",
+unsafe_allow_html=True
+)
 
+# -----------------------------
+# Year-wise Summary
+# -----------------------------
 st.markdown("#### Year-wise Summary of Registered Alumni")
 
 year_counts = df["PASSING YEAR"].value_counts().sort_index(ascending=False)
 
-total_alumni = len(df)
+cols = st.columns(min(len(year_counts)+1,6))
 
-cols = st.columns(len(year_counts) + 1)
-
-# Total Alumni Card
 with cols[0]:
     st.markdown(f"""
     <div style="
@@ -227,31 +227,35 @@ with cols[0]:
         text-align:center;
         font-weight:bold;
         box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-        TOTAL<br>
-        {total_alumni}
+        TOTAL<br>{total_alumni}
     </div>
     """, unsafe_allow_html=True)
 
-# Year Cards
-for i, (year, count) in enumerate(year_counts.items()):
-    with cols[i+1]:
-        st.markdown(f"""
-        <div style="
-            background:white;
-            padding:10px;
-            border-radius:8px;
-            text-align:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.1);
-            border-top:4px solid #1a237e;">
-            <b>{year}</b><br>
-            <span style="color:#555">({count})</span>
-        </div>
-        """, unsafe_allow_html=True)
-years = sorted(df["PASSING YEAR"].unique(), reverse=True)
+for i,(year,count) in enumerate(year_counts.items()):
+    if i+1 < len(cols):
+        with cols[i+1]:
+            st.markdown(f"""
+            <div style="
+                background:white;
+                padding:10px;
+                border-radius:8px;
+                text-align:center;
+                box-shadow:0 2px 6px rgba(0,0,0,0.1);
+                border-top:4px solid #1a237e;">
+                <b>{year}</b><br>
+                <span style="color:#555">({count})</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+# -----------------------------
+# Year Sections
+# -----------------------------
+years = sorted(display_df["PASSING YEAR"].unique(), reverse=True)
 
 for year in years:
 
-    year_count = len(df[df["PASSING YEAR"] == year])
+    year_df = display_df[display_df["PASSING YEAR"] == year]
+    year_count = len(year_df)
 
     st.markdown(
         f"<div class='year-header'>🎓 Class of {year} ({year_count})</div>",
@@ -260,15 +264,14 @@ for year in years:
 
     with st.expander("View / Hide Alumni", expanded=True):
 
-        year_df = df[df["PASSING YEAR"] == year]
-
         programs = year_df["Program"].unique()
 
         for program in programs:
 
-            color = program_colors.get(program, "#00acfe")
             program_df = year_df[year_df["Program"] == program]
             program_count = len(program_df)
+
+            color = program_colors.get(program,"#00acfe")
 
             st.markdown(f"### {program} ({program_count})")
 
@@ -277,13 +280,10 @@ for year in years:
                 unsafe_allow_html=True
             )
 
-            
-
-            # Responsive card layout
             num_cols = 4
             cols = st.columns(num_cols)
 
-            for idx, row in enumerate(program_df.itertuples()):
+            for idx,row in enumerate(program_df.itertuples()):
 
                 with cols[idx % num_cols]:
 
