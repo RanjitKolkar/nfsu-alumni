@@ -208,11 +208,6 @@ f"<span style='font-size:14px;color:gray;'>Last updated: {last_update} | Total A
 unsafe_allow_html=True
 )
 
-# -----------------------------
-# Year-wise Summary
-# -----------------------------
-st.markdown("#### Year-wise Summary of Registered Alumni")
-
 year_counts = df["PASSING YEAR"].value_counts().sort_index(ascending=False)
 
 cols = st.columns(min(len(year_counts)+1,6))
