@@ -201,18 +201,60 @@ if search:
 # -----------------------------
 # Alumni Directory
 # -----------------------------
+total_alumni = len(df)
 st.markdown("### 🎓 Alumni Directory")
-st.markdown(
-f"<span style='font-size:14px;color:gray;'>Last updated: {last_update}</span>",
-unsafe_allow_html=True
-)
 
+# -----------------------------
+# Year Summary
+# -----------------------------
+
+st.markdown("#### Year-wise Summary of Registered Alumni")
+
+year_counts = df["PASSING YEAR"].value_counts().sort_index(ascending=False)
+
+total_alumni = len(df)
+
+cols = st.columns(len(year_counts) + 1)
+
+# Total Alumni Card
+with cols[0]:
+    st.markdown(f"""
+    <div style="
+        background:#1a237e;
+        color:white;
+        padding:10px;
+        border-radius:8px;
+        text-align:center;
+        font-weight:bold;
+        box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+        TOTAL<br>
+        {total_alumni}
+    </div>
+    """, unsafe_allow_html=True)
+
+# Year Cards
+for i, (year, count) in enumerate(year_counts.items()):
+    with cols[i+1]:
+        st.markdown(f"""
+        <div style="
+            background:white;
+            padding:10px;
+            border-radius:8px;
+            text-align:center;
+            box-shadow:0 2px 6px rgba(0,0,0,0.1);
+            border-top:4px solid #1a237e;">
+            <b>{year}</b><br>
+            <span style="color:#555">({count})</span>
+        </div>
+        """, unsafe_allow_html=True)
 years = sorted(df["PASSING YEAR"].unique(), reverse=True)
 
 for year in years:
 
+    year_count = len(df[df["PASSING YEAR"] == year])
+
     st.markdown(
-        f"<div class='year-header'>🎓 Class of {year}</div>",
+        f"<div class='year-header'>🎓 Class of {year} ({year_count})</div>",
         unsafe_allow_html=True
     )
 
@@ -225,15 +267,17 @@ for year in years:
         for program in programs:
 
             color = program_colors.get(program, "#00acfe")
+            program_df = year_df[year_df["Program"] == program]
+            program_count = len(program_df)
 
-            st.markdown(f"### {program}")
+            st.markdown(f"### {program} ({program_count})")
 
             st.markdown(
                 f"<div class='program-divider' style='background:{color}'></div>",
                 unsafe_allow_html=True
             )
 
-            program_df = year_df[year_df["Program"] == program]
+            
 
             # Responsive card layout
             num_cols = 4
