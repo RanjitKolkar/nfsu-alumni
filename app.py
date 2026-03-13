@@ -257,7 +257,7 @@ for year in years:
         unsafe_allow_html=True
     )
 
-    with st.expander("View / Hide Alumni", expanded=True):
+    with st.expander("View / Hide Alumni", expanded=False):
 
         programs = year_df["Program"].unique()
 
